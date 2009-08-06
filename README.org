@@ -1,0 +1,100 @@
+#+COMMENT: -*- org -*-
+#+TITLE:     django-sqs
+#+AUTHOR:    Maciej Pasternacki
+#+EMAIL:     maciej@pasternacki.net
+#+DATE:      2009-08-06 Thu
+#+TEXT: Integrate Amazon Simple Queue Service in your Django project
+#+KEYWORDS: 
+#+LANGUAGE:  en
+#+OPTIONS:   H:3 num:t toc:t \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
+#+OPTIONS:   TeX:t LaTeX:t skip:nil d:nil todo:t pri:nil tags:not-in-toc
+#+INFOJS_OPT: view:nil toc:nil ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
+#+EXPORT_SELECT_TAGS: export
+#+EXPORT_EXCLUDE_TAGS: noexport
+#+LINK_UP:   
+#+LINK_HOME: 
+
+* Setup
+  Boto library for accessing Amazon Web Services is required.
+
+  1. Add =django_sqs= to your Python path
+  2. Add =django_sqs= to INSTALLED_APPS setting
+  3. Set AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
+  4. If DEBUG, set SQS_QUEUE_PREFIX to prefix your queues and avoid
+     clashes with other developers, production/staging env and so on
+  5. Optionally set SQS_DEFAULT_VISIBILITY_TIMEOUT (default is 60 seconds)
+  6. Optionally set SQS_POLL_PERIOD (default is 10 seconds)
+
+* Receivers
+  Create receiver function that accepts one argument, which will be an
+  instance of =boto.sqs.message.Message= or its custom subclass.
+  Decorate it with:
+
+  : django_sqs.receiver(queue_name, [visibility_timeout=None, message_class=None])
+
+  Alternatively, call:
+
+  : django_sqs.register(queue_name, [fn=None, visibility_timeout=None, message_class=None])
+
+  If =fn= is None or not given, no handler is assigned: messages can
+  be sent, but won't be received.
+
+  Create function in modules that will be imported by default
+  (recommendation: use =receivers.py= and import them in =models.py=,
+  autoimporting TBD).
+
+** Example receiver
+   : @receiver("test")
+   : def receive_message(msg):
+   :     print 'received:', msg.get_body()
+
+
+* Receiving
+  : python manage.py runreceiver [queue_name [queue_name [...]]]
+
+  If no =queue_name= parameters are given, receive from all configured
+  queues.
+
+  If more than one queue is registered, a new process is forked for
+  each queue.
+
+  For each message received on the queue, registered receiver function
+  is called with the message instance as argument.  If receiver
+  function returns successfully (i.e. without raising an exception),
+  message is then deleted from queue.  If receiver message raises an
+  exception, message is left in queue for further processing.
+
+* Sending
+
+  : django_sqs.send(queue_name, message=None, **kwargs)
+
+  =message= should be an instance of =message_class= configured with
+  =receiver= decorator or =register= function for the queue (or
+  =boto.sqs.message.Message=).
+
+  When =message= is omitted or =None=, new instance of queue's message
+  class will be instantiated using =**kwargs=.  With default message
+  class, =boto.sqs.message.Message=, we can simply provide body:
+
+  : django_sqs.send("a_queue", body='Lorem ipsum dolor sit amet')
+
+* Custom message classes
+  For sending other values than raw, non-unicode strings, any of
+  classes provided in =boto.sqs.message= or their subclasses may be
+  used.  The module is well commented (much better than this one), so
+  go ahead and read the fine source!
+
+* FIXME
+** TODO Honor SQS_QUEUE_PREFIX even when not DEBUG
+** TODO Sensible forking/threading or multiplexing instead of the fork hack?
+** TODO Autoimporting receivers.py from apps
+** TODO docstrings
+** TODO Minimize polling
+   Amazon charges for every call.  Less polling, lower invoice.  Some
+   exponential backoff + out-of-band signal (view?) to wake up a running
+   receiver process may be a good thing.
+** TODO Custom exception to leave message in queue
+   Provide a custom exception class that won't be handled by receive
+   loop (i.e. no backtrace) that can be used by receiver function to
+   explicitly leave message in queue without printing backtrace and
+   alarming everyone.
