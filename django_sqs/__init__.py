@@ -38,9 +38,10 @@ def register(queue_name, fn=None, **kwargs):
 
 def receiver(queue_name, **kwargs):
     """Registers decorated function as SQS message receiver."""
-    if queue_name in queues:
-        raise ValueError(
-            "Queue %s already received: %r" % (queue_name, queues[queue_name]))
+# this seems to happen when a moduel with a receiver is imported
+#     if queue_name in queues:
+#         raise ValueError(
+#             "Queue %s already received: %r" % (queue_name, queues[queue_name]))
     def _decorator(fn):
         register(queue_name, fn, **kwargs)
         return fn
