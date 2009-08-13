@@ -64,6 +64,8 @@ class RegisteredQueue(object):
                 for m in mm:
                     try:
                         self.receive(m)
+                    except KeyboardInterrupt, e:
+                        raise e
                     except:
                         # FIXME: handle exception
                         traceback.print_exc()
