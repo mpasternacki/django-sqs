@@ -1,3 +1,4 @@
+import signal
 import time
 import traceback
 
@@ -11,16 +12,29 @@ DEFAULT_VISIBILITY_TIMEOUT = getattr(
 POLL_PERIOD = getattr(
     settings, 'SQS_POLL_PERIOD', 10)
 
+
+class TimedOut(Exception):
+    """Raised by timeout handler."""
+    pass
+
+def sigalrm_handler(signum, frame):
+    raise TimedOut()
+
 class RegisteredQueue(object):
 
     def __init__(self, connection, name,
-                 receiver=None, visibility_timeout=None, message_class=None):
+                 receiver=None, visibility_timeout=None, message_class=None,
+                 timeout=None):
         self.connection = connection
         self.name = name
         self.receiver = receiver
         self.visibility_timeout = visibility_timeout or DEFAULT_VISIBILITY_TIMEOUT
         self.message_class = message_class or boto.sqs.message.Message
         self.queue = None
+        self.timeout = timeout
+
+        if self.timeout and not self.receiver:
+            raise ValueError("timeout is meaningful only with receiver")
 
         if not issubclass(self.message_class, boto.sqs.message.Message):
             raise ValueError(
@@ -52,7 +66,13 @@ class RegisteredQueue(object):
     def receive(self, message):
         if self.receiver is None:
             raise Exception("Not configured to received messages.")
-        return self.receiver(message)
+        if self.timeout:
+           signal.alarm(self.timeout)
+           signal.signal(signal.SIGALRM, sigalrm_handler) 
+        try:
+            self.receiver(message)
+        finally:
+            signal.signal(signal.SIGALRM, signal.SIG_DFL)
 
     def receive_single(self):
         """Receive single message from the queue.
