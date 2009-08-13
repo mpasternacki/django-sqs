@@ -52,7 +52,21 @@ class RegisteredQueue(object):
     def receive(self, message):
         if self.receiver is None:
             raise Exception("Not configured to received messages.")
-        self.receiver(message)
+        return self.receiver(message)
+
+    def receive_single(self):
+        """Receive single message from the queue.
+
+        This method is here for debugging purposes.  It receives
+        single message from the queue, processes it, deletes it from
+        queue and returns (message, handler_result_value) pair.
+        """
+        q = self.get_queue()
+        mm = q.get_messages(1)
+        if mm:
+            rv1 = self.receive(mm[0])
+            q.delete_message(mm[0])
+            return (mm[0], rv1)
 
     def receive_loop(self):
         q = self.get_queue()
