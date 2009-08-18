@@ -20,7 +20,22 @@ class TimedOut(Exception):
 def sigalrm_handler(signum, frame):
     raise TimedOut()
 
+
 class RegisteredQueue(object):
+
+    class ReceiverProxy(object):
+        """Callable object that sends message via appropriate SQS queue.
+
+        Available attributes:
+        - direct - inner (decorated) function
+        - registered_queue - a RegisteredQueue instance for this queue
+        """
+        def __init__(self, registered_queue):
+            self.registered_queue = registered_queue
+            self.direct = registered_queue.receiver
+
+        def __call__(self, message=None, **kwargs):
+            self.registered_queue.send(message, **kwargs)
 
     def __init__(self, connection, name,
                  receiver=None, visibility_timeout=None, message_class=None,
@@ -52,6 +67,9 @@ class RegisteredQueue(object):
                 self.full_name, self.visibility_timeout)
             self.queue.set_message_class(self.message_class)
         return self.queue
+
+    def get_receiver_proxy(self):
+        return self.ReceiverProxy(self)
 
     def send(self, message=None, **kwargs):
         q = self.get_queue()

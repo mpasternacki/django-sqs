@@ -11,9 +11,13 @@ Table of Contents
 =================
 1 Setup 
 2 Receivers 
-    2.1 Example receiver 
+    2.1 Register using a decorator 
+    2.2 Register manually 
+    2.3 Example receiver 
 3 Receiving 
 4 Sending 
+    4.1 Using decorated function 
+    4.2 Manually 
 5 Custom message classes 
 6 FIXME 
     6.1 Honor SQS_QUEUE_PREFIX even when not DEBUG 
@@ -40,27 +44,42 @@ Table of Contents
 ~~~~~~~~~~~~
   Create receiver function that accepts one argument, which will be an
   instance of `boto.sqs.message.Message' or its custom subclass.
-  Decorate it with:
+  Then, register it as queue receiver:
 
-  django_sqs.receiver(queue_name, [visibility_timeout=None, message_class=None])
+2.1 Register using a decorator 
+===============================
+   Decorate receiver function with:
 
-  Alternatively, call:
+   django_sqs.receiver(queue_name, [visibility_timeout=None, message_class=None])
 
-  django_sqs.register(queue_name, [fn=None, visibility_timeout=None, message_class=None])
+   Decorated function will become an instance of
+   `django_sqs.registered_queue.RegisteredQueue.ReceiverProxy' class.
+   Instance is callable - you may call it with an instance of
+   appropriate message class, or its constructor's keyword arguments,
+   and the message will be added to the queue.  Instance provides also
+   attributes `direct' with original decorated function, and
+   `registered_queue' with appropriate
+   `django_sqs.registered_queue.RegisteredQueue' instance.
 
-  If `fn' is None or not given, no handler is assigned: messages can
-  be sent, but won't be received.
+2.2 Register manually 
+======================
+   Alternatively, you can avoid decoration, and register a receiver
+   manually by calling:
 
-  Create function in modules that will be imported by default
-  (recommendation: use `receivers.py' and import them in `models.py',
-  autoimporting TBD).
+   django_sqs.register(queue_name, [fn=None, visibility_timeout=None, message_class=None])
 
-2.1 Example receiver 
+   If `fn' is None or not given, no handler is assigned: messages can
+   be sent, but won't be received.
+
+   Create function in modules that will be imported by default
+   (recommendation: use `receivers.py' and import them in `models.py',
+   autoimporting TBD).
+
+2.3 Example receiver 
 =====================
    @receiver("test")
    def receive_message(msg):
        print 'received:', msg.get_body()
-
 
 3 Receiving 
 ~~~~~~~~~~~~
@@ -81,17 +100,27 @@ Table of Contents
 4 Sending 
 ~~~~~~~~~~
 
-  django_sqs.send(queue_name, message=None, **kwargs)
+4.1 Using decorated function 
+=============================
+   You can simply call function decorated with `@receiver' decorator,
+   providing a message instance or keyword arguments (like for `send'
+   function described below).
 
-  `message' should be an instance of `message_class' configured with
-  `receiver' decorator or `register' function for the queue (or
-  `boto.sqs.message.Message').
+4.2 Manually 
+=============
+   To send a message manually, use following function:
 
-  When `message' is omitted or `None', new instance of queue's message
-  class will be instantiated using `**kwargs'.  With default message
-  class, `boto.sqs.message.Message', we can simply provide body:
+   django_sqs.send(queue_name, message=None, **kwargs)
 
-  django_sqs.send("a_queue", body='Lorem ipsum dolor sit amet')
+   `message' should be an instance of `message_class' configured with
+   `receiver' decorator or `register' function for the queue (or
+   `boto.sqs.message.Message').
+
+   When `message' is omitted or `None', new instance of queue's message
+   class will be instantiated using `**kwargs'.  With default message
+   class, `boto.sqs.message.Message', we can simply provide body:
+
+   django_sqs.send("a_queue", body='Lorem ipsum dolor sit amet')
 
 5 Custom message classes 
 ~~~~~~~~~~~~~~~~~~~~~~~~~

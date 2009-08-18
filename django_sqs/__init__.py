@@ -34,19 +34,17 @@ queues = {}
 # convenience
 
 def register(queue_name, fn=None, **kwargs):
-    queues[queue_name] = RegisteredQueue(connection, queue_name, fn, **kwargs)
+    rv = RegisteredQueue(connection, queue_name, fn, **kwargs)
+    queues[queue_name] = rv
+    return rv
+
+
 
 def receiver(queue_name, **kwargs):
     """Registers decorated function as SQS message receiver."""
-# this seems to happen when a moduel with a receiver is imported
-#     if queue_name in queues:
-#         raise ValueError(
-#             "Queue %s already received: %r" % (queue_name, queues[queue_name]))
     def _decorator(fn):
-        register(queue_name, fn, **kwargs)
-        return fn
+        return register(queue_name, fn, **kwargs).get_receiver_proxy()
     return _decorator
 
 def send(queue_name, message=None, **kwargs):
     queues[queue_name].send(message, **kwargs)
-

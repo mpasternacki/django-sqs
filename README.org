@@ -12,7 +12,7 @@
 #+EXPORT_SELECT_TAGS: export
 #+EXPORT_EXCLUDE_TAGS: noexport
 #+LINK_UP:   
-#+LINK_HOME: 
+#+LINK_HOME: http://github.com/mpasternacki/django-sqs/
 
 * Setup
   Boto library for accessing Amazon Web Services is required.
@@ -28,26 +28,39 @@
 * Receivers
   Create receiver function that accepts one argument, which will be an
   instance of =boto.sqs.message.Message= or its custom subclass.
-  Decorate it with:
+  Then, register it as queue receiver:
 
-  : django_sqs.receiver(queue_name, [visibility_timeout=None, message_class=None])
+** Register using a decorator
+   Decorate receiver function with:
 
-  Alternatively, call:
+   : django_sqs.receiver(queue_name, [visibility_timeout=None, message_class=None])
 
-  : django_sqs.register(queue_name, [fn=None, visibility_timeout=None, message_class=None])
+   Decorated function will become an instance of
+   =django_sqs.registered_queue.RegisteredQueue.ReceiverProxy= class.
+   Instance is callable - you may call it with an instance of
+   appropriate message class, or its constructor's keyword arguments,
+   and the message will be added to the queue.  Instance provides also
+   attributes =direct= with original decorated function, and
+   =registered_queue= with appropriate
+   =django_sqs.registered_queue.RegisteredQueue= instance.
 
-  If =fn= is None or not given, no handler is assigned: messages can
-  be sent, but won't be received.
+** Register manually
+   Alternatively, you can avoid decoration, and register a receiver
+   manually by calling:
 
-  Create function in modules that will be imported by default
-  (recommendation: use =receivers.py= and import them in =models.py=,
-  autoimporting TBD).
+   : django_sqs.register(queue_name, [fn=None, visibility_timeout=None, message_class=None])
+
+   If =fn= is None or not given, no handler is assigned: messages can
+   be sent, but won't be received.
+
+   Create function in modules that will be imported by default
+   (recommendation: use =receivers.py= and import them in =models.py=,
+   autoimporting TBD).
 
 ** Example receiver
    : @receiver("test")
    : def receive_message(msg):
    :     print 'received:', msg.get_body()
-
 
 * Receiving
   : python manage.py runreceiver [queue_name [queue_name [...]]]
@@ -65,18 +78,24 @@
   exception, message is left in queue for further processing.
 
 * Sending
+** Using decorated function
+   You can simply call function decorated with =@receiver= decorator,
+   providing a message instance or keyword arguments (like for =send=
+   function described below).
+** Manually
+   To send a message manually, use following function:
 
-  : django_sqs.send(queue_name, message=None, **kwargs)
+   : django_sqs.send(queue_name, message=None, **kwargs)
 
-  =message= should be an instance of =message_class= configured with
-  =receiver= decorator or =register= function for the queue (or
-  =boto.sqs.message.Message=).
+   =message= should be an instance of =message_class= configured with
+   =receiver= decorator or =register= function for the queue (or
+   =boto.sqs.message.Message=).
 
-  When =message= is omitted or =None=, new instance of queue's message
-  class will be instantiated using =**kwargs=.  With default message
-  class, =boto.sqs.message.Message=, we can simply provide body:
+   When =message= is omitted or =None=, new instance of queue's message
+   class will be instantiated using =**kwargs=.  With default message
+   class, =boto.sqs.message.Message=, we can simply provide body:
 
-  : django_sqs.send("a_queue", body='Lorem ipsum dolor sit amet')
+   : django_sqs.send("a_queue", body='Lorem ipsum dolor sit amet')
 
 * Custom message classes
   For sending other values than raw, non-unicode strings, any of
