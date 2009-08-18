@@ -51,9 +51,9 @@ class RegisteredQueue(object):
         if self.timeout and not self.receiver:
             raise ValueError("timeout is meaningful only with receiver")
 
-        if not issubclass(self.message_class, boto.sqs.message.Message):
+        if not issubclass(self.message_class, boto.sqs.message.RawMessage):
             raise ValueError(
-                "%s is not a subclass of boto.sqs.message.Message"
+                "%s is not a subclass of boto.sqs.message.RawMessage"
                 % self.message_class)
 
         prefix = getattr(settings, 'SQS_QUEUE_PREFIX', None)
