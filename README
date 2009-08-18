@@ -144,8 +144,9 @@ Table of Contents
 6 FIXME 
 ~~~~~~~~
 
-6.1 TODO Honor SQS_QUEUE_PREFIX even when not DEBUG 
+6.1 DONE Honor SQS_QUEUE_PREFIX even when not DEBUG 
 ====================================================
+   CLOSED: [2009-08-18 Tue 17:50]
 
 6.2 TODO Sensible forking/threading or multiplexing instead of the fork hack? 
 ==============================================================================

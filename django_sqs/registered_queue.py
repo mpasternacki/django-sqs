@@ -56,8 +56,9 @@ class RegisteredQueue(object):
                 "%s is not a subclass of boto.sqs.message.Message"
                 % self.message_class)
 
-        if settings.DEBUG:
-            self.full_name = '%s__%s' % (settings.SQS_QUEUE_PREFIX, self.name)
+        prefix = getattr(settings, 'SQS_QUEUE_PREFIX', None)
+        if prefix:
+            self.full_name = '%s__%s' % (prefix, self.name)
         else:
             self.full_name = self.name
 
