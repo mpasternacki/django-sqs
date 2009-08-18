@@ -103,6 +103,16 @@
   used.  The module is well commented (much better than this one), so
   go ahead and read the fine source!
 
+** ModelInstanceMessage class
+   The =django_sqs.message.ModelInstanceMessage= class is provided for
+   convenience.  It encodes a single model instance, using Django's
+   ContentType framework (as app/model/primary key triple).  It
+   accepts =instance= keyword parameter in constructor, and provides
+   =get_instance()= method.
+
+   There is no support for passing additional information except the
+   instance yet.
+
 * FIXME
 ** TODO Honor SQS_QUEUE_PREFIX even when not DEBUG
 ** TODO Sensible forking/threading or multiplexing instead of the fork hack?

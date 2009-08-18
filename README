@@ -19,6 +19,7 @@ Table of Contents
     4.1 Using decorated function 
     4.2 Manually 
 5 Custom message classes 
+    5.1 ModelInstanceMessage class 
 6 FIXME 
     6.1 Honor SQS_QUEUE_PREFIX even when not DEBUG 
     6.2 Sensible forking/threading or multiplexing instead of the fork hack? 
@@ -128,6 +129,17 @@ Table of Contents
   classes provided in `boto.sqs.message' or their subclasses may be
   used.  The module is well commented (much better than this one), so
   go ahead and read the fine source!
+
+5.1 ModelInstanceMessage class 
+===============================
+   The `django_sqs.message.ModelInstanceMessage' class is provided for
+   convenience.  It encodes a single model instance, using Django's
+   ContentType framework (as app/model/primary key triple).  It
+   accepts `instance' keyword parameter in constructor, and provides
+   `get_instance()' method.
+
+   There is no support for passing additional information except the
+   instance yet.
 
 6 FIXME 
 ~~~~~~~~
