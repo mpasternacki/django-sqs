@@ -51,7 +51,7 @@ Table of Contents
 ===============================
    Decorate receiver function with:
 
-   django_sqs.receiver(queue_name, [visibility_timeout=None, message_class=None])
+   django_sqs.receiver([queue_name=None, visibility_timeout=None, message_class=None])
 
    Decorated function will become an instance of
    `django_sqs.registered_queue.RegisteredQueue.ReceiverProxy' class.
@@ -61,6 +61,9 @@ Table of Contents
    attributes `direct' with original decorated function, and
    `registered_queue' with appropriate
    `django_sqs.registered_queue.RegisteredQueue' instance.
+
+   If `queue_name' is omitted or false, function's `__module__' and
+   `__name__' is used, with dots converted to double underscores.
 
 2.2 Register manually 
 ======================

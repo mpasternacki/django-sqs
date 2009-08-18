@@ -39,12 +39,14 @@ def register(queue_name, fn=None, **kwargs):
     return rv
 
 
-
-def receiver(queue_name, **kwargs):
+def receiver(queue_name=None, **kwargs):
     """Registers decorated function as SQS message receiver."""
     def _decorator(fn):
-        return register(queue_name, fn, **kwargs).get_receiver_proxy()
+        qn = queue_name or '%s__%s' % (
+            fn.__module__.replace('.','__'), fn.__name__ )
+        return register(qn, fn, **kwargs).get_receiver_proxy()
     return _decorator
+
 
 def send(queue_name, message=None, **kwargs):
     queues[queue_name].send(message, **kwargs)
