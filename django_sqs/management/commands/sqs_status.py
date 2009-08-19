@@ -11,7 +11,6 @@ class Command(NoArgsCommand):
     help = "Provides information about used SQS queues and the number of items in each of them."
 
     def handle_noargs(self, **options):
-        logging.disable(logging.WARNING)
         print
         print "Active SQS queues"
         print "-----------------"
