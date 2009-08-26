@@ -27,9 +27,31 @@ class ModelInstanceMessage(boto.sqs.message.RawMessage):
                 (ct.app_label, ct.model, value.pk)))
 
     def decode(self, value):
-        app_label, model, pk = json.loads(base64.b64decode(value))
-        ct = ContentType.objects.get(app_label=app_label, model=model)
-        return ct.get_object_for_this_type(pk=pk)
+        try:
+            app_label, model, pk = json.loads(base64.b64decode(value))
+        except Exception, e:
+            self.__reason = "Error decoding payload: %s" % e
+            return None
+            
+        try:
+            ct = ContentType.objects.get(app_label=app_label, model=model)
+        except ContentType.DoesNotExist:
+            self.__reason = "Invalid content type."
+            return None
+
+        cls = ct.model_class()
+        try:
+            return cls.objects.get(pk=pk)
+        except cls.DoesNotExist:
+            self.__reason = "%s.%s %r does not exist" % (
+                cls.__module__, cls.__name__, pk)
+            return None
+
+    def get_body(self):
+        rv = boto.sqs.message.RawMessage.get_body(self)
+        if rv is not None:
+            return rv
+        raise ValueError(self.__reason)
 
     def get_instance(self):
         return self.get_body()
