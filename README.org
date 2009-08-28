@@ -116,9 +116,17 @@
    There is no support for passing additional information except the
    instance yet.
 
+* Management
+** manage.py sqs_status
+   Prints the (approximate) count of messages in the queue.
+** manage.py sqs_clear
+   Clears all queues (by default), or queues named as arguments.
+   Prints number of messages deleted.
+
+   If queue receivers are running or were running recently, some
+   messages may be still locked and won't be deleted.  Command may
+   need to be re-run.
 * FIXME
-** DONE Honor SQS_QUEUE_PREFIX even when not DEBUG
-   CLOSED: [2009-08-18 Tue 17:50]
 ** TODO Sensible forking/threading or multiplexing instead of the fork hack?
 ** TODO Autoimporting receivers.py from apps
 ** TODO docstrings

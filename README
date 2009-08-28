@@ -20,13 +20,15 @@ Table of Contents
     4.2 Manually 
 5 Custom message classes 
     5.1 ModelInstanceMessage class 
-6 FIXME 
-    6.1 Honor SQS_QUEUE_PREFIX even when not DEBUG 
-    6.2 Sensible forking/threading or multiplexing instead of the fork hack? 
-    6.3 Autoimporting receivers.py from apps 
-    6.4 docstrings 
-    6.5 Minimize polling 
-    6.6 Custom exception to leave message in queue 
+6 Management 
+    6.1 manage.py sqs_status 
+    6.2 manage.py sqs_clear 
+7 FIXME 
+    7.1 Sensible forking/threading or multiplexing instead of the fork hack? 
+    7.2 Autoimporting receivers.py from apps 
+    7.3 docstrings 
+    7.4 Minimize polling 
+    7.5 Custom exception to leave message in queue 
 
 
 1 Setup 
@@ -144,29 +146,41 @@ Table of Contents
    There is no support for passing additional information except the
    instance yet.
 
-6 FIXME 
+6 Management 
+~~~~~~~~~~~~~
+
+6.1 manage.py sqs_status 
+=========================
+   Prints the (approximate) count of messages in the queue.
+
+6.2 manage.py sqs_clear 
+========================
+   Clears all queues (by default), or queues named as arguments.
+   Prints number of messages deleted.
+
+   If queue receivers are running or were running recently, some
+   messages may be still locked and won't be deleted.  Command may
+   need to be re-run.
+
+7 FIXME 
 ~~~~~~~~
 
-6.1 DONE Honor SQS_QUEUE_PREFIX even when not DEBUG 
-====================================================
-   CLOSED: [2009-08-18 Tue 17:50]
-
-6.2 TODO Sensible forking/threading or multiplexing instead of the fork hack? 
+7.1 TODO Sensible forking/threading or multiplexing instead of the fork hack? 
 ==============================================================================
 
-6.3 TODO Autoimporting receivers.py from apps 
+7.2 TODO Autoimporting receivers.py from apps 
 ==============================================
 
-6.4 TODO docstrings 
+7.3 TODO docstrings 
 ====================
 
-6.5 TODO Minimize polling 
+7.4 TODO Minimize polling 
 ==========================
    Amazon charges for every call.  Less polling, lower invoice.  Some
    exponential backoff + out-of-band signal (view?) to wake up a running
    receiver process may be a good thing.
 
-6.6 TODO Custom exception to leave message in queue 
+7.5 TODO Custom exception to leave message in queue 
 ====================================================
    Provide a custom exception class that won't be handled by receive
    loop (i.e. no backtrace) that can be used by receiver function to
