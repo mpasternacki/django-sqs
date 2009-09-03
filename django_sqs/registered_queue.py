@@ -68,7 +68,7 @@ class RegisteredQueue(object):
 
         self._log = logging.getLogger('django_sqs.queue.%s' % self.name)
         self._log.addHandler(_NullHandler())
-        self._log.info("Receiving from %s" % self.full_name)
+        self._log.info("Using queue %s" % self.full_name)
 
     def get_queue(self):
         if self.queue is None:
