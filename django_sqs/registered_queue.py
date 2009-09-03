@@ -1,10 +1,14 @@
+import logging
 import signal
 import time
-import traceback
 
 import boto.sqs.message
 
 from django.conf import settings
+
+class _NullHandler(logging.Handler):
+    def emit(self, record):
+        pass
 
 DEFAULT_VISIBILITY_TIMEOUT = getattr(
     settings, 'SQS_DEFAULT_VISIBILITY_TIMEOUT', 60)
@@ -61,6 +65,10 @@ class RegisteredQueue(object):
             self.full_name = '%s__%s' % (prefix, self.name)
         else:
             self.full_name = self.name
+
+        self._log = logging.getLogger('django_sqs.queue.%s' % self.name)
+        self._log.addHandler(_NullHandler())
+        self._log.info("Receiving from %s" % self.full_name)
 
     def get_queue(self):
         if self.queue is None:
@@ -120,7 +128,6 @@ class RegisteredQueue(object):
                     except KeyboardInterrupt, e:
                         raise e
                     except:
-                        # FIXME: handle exception
-                        traceback.print_exc()
+                        self._log.exception("Caught exception in receive loop.")
                     else:
                         q.delete_message(m)
