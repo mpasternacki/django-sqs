@@ -15,18 +15,6 @@ try:
 except Exception, e:
     raise ImproperlyConfigured("Misconfigured: %s" % e)
 
-# make connection
-
-if settings.DEBUG:
-    boto_debug = 1
-else:
-    boto_debug=0
-
-connection = boto.sqs.connection.SQSConnection(
-    AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY,
-    debug=boto_debug)
-
-
 # registry
 
 queues = {}
@@ -34,7 +22,7 @@ queues = {}
 # convenience
 
 def register(queue_name, fn=None, **kwargs):
-    rv = RegisteredQueue(connection, queue_name, fn, **kwargs)
+    rv = RegisteredQueue(queue_name, fn, **kwargs)
     queues[queue_name] = rv
     return rv
 

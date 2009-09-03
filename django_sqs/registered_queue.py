@@ -10,6 +10,11 @@ class _NullHandler(logging.Handler):
     def emit(self, record):
         pass
 
+if settings.DEBUG:
+    boto_debug = 1
+else:
+    boto_debug=0
+
 DEFAULT_VISIBILITY_TIMEOUT = getattr(
     settings, 'SQS_DEFAULT_VISIBILITY_TIMEOUT', 60)
 
@@ -41,10 +46,10 @@ class RegisteredQueue(object):
         def __call__(self, message=None, **kwargs):
             self.registered_queue.send(message, **kwargs)
 
-    def __init__(self, connection, name,
+    def __init__(self, name,
                  receiver=None, visibility_timeout=None, message_class=None,
                  timeout=None):
-        self.connection = connection
+        self._connection = None
         self.name = name
         self.receiver = receiver
         self.visibility_timeout = visibility_timeout or DEFAULT_VISIBILITY_TIMEOUT
@@ -70,9 +75,17 @@ class RegisteredQueue(object):
         self._log.addHandler(_NullHandler())
         self._log.info("Using queue %s" % self.full_name)
 
+    def get_connection(self):
+        if self._connection is None:
+            self._connection = boto.sqs.connection.SQSConnection(
+                settings.AWS_ACCESS_KEY_ID,
+                settings.AWS_SECRET_ACCESS_KEY,
+                debug=boto_debug)
+        return self._connection
+
     def get_queue(self):
         if self.queue is None:
-            self.queue = self.connection.create_queue(
+            self.queue = self.get_connection().create_queue(
                 self.full_name, self.visibility_timeout)
             self.queue.set_message_class(self.message_class)
         return self.queue
