@@ -112,7 +112,17 @@ class RegisteredQueue(object):
         try:
             self.receiver(message)
         finally:
-            signal.signal(signal.SIGALRM, signal.SIG_DFL)
+            if self.timeout:
+                try:
+                    signal.alarm(0)
+                    signal.signal(signal.SIGALRM, signal.SIG_DFL)
+                except TimedOut:
+                    # possible race condition if we don't cancel the
+                    # alarm in time.  Now there is no race condition
+                    # threat, since alarm already rang.
+                    signal.alarm(0)
+                    signal.signal(signal.SIGALRM, signal.SIG_DFL)
+                    
 
     def receive_single(self):
         """Receive single message from the queue.
