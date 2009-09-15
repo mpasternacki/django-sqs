@@ -141,7 +141,7 @@ class RegisteredQueue(object):
     def receive_loop(self):
         q = self.get_queue()
         while True:
-            mm = q.get_messages(10)
+            mm = q.get_messages(1)
             if not mm:
                 time.sleep(POLL_PERIOD)
             else:
