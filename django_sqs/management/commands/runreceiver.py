@@ -1,10 +1,42 @@
+import logging
 import os
 from optparse import make_option
+import signal
 
 from django.core.management.base import BaseCommand
 
 import django_sqs
 
+# null handler to avoid warnings
+class _NullHandler(logging.Handler):
+    def emit(self, record):
+        pass
+
+# signal name dict for logging
+_signals = {}
+for name in dir(signal):
+    if name.startswith('SIG'):
+        _signals[getattr(signal, name)] = name
+def _status_string(status):
+    "Pretty status description for exited child."
+
+    if os.WIFSIGNALED(status):
+        return "Terminated by %s (%d)" % (
+            _signals.get(os.WTERMSIG(status), "unknown signal"),
+            os.WTERMSIG(status))
+
+    if os.WIFEXITED(status):
+        return "Exited with status %d" % os.WEXITSTATUS(status)
+
+    if os.WIFSTOPPED(status):
+        return "Stopped by %s (%d)" % (
+            _signals.get(os.WSTOPSIG(status), "unknown signal"),
+            os.WSTOPSIG(status))
+
+    if os.WIFCONTINUED(status):
+        return "Continued from stop"
+
+    return "Unknown reason (%r)" % status
 
 class Command(BaseCommand):
     help = "Run Amazon SQS receiver for queues registered with django_sqs."
@@ -44,18 +76,38 @@ class Command(BaseCommand):
         else:
             # fork a group of processes.  Quick hack, to be replaced
             # ASAP with something decent.
-            os.setpgrp()
-            pids = []
-            for queue_name in queue_names:
-                pid = os.fork()
-                if not pid:
-                    self.receive(queue_name)
-                    return
-                pids.append(pid)
+            _log = logging.getLogger('django_sqs.runreceiver.master')
+            _log.addHandler(_NullHandler())
 
-            while pids:
+            os.setpgrp()
+            children = {}               # queue name -> pid
+            for queue_name in queue_names:
+                pid = self.fork_child(queue_name)
+                children[pid] = queue_name
+                _log.info("Forked %s for %s" % (pid, queue_name))
+
+            while children:
                 pid, status = os.wait()
-                pids.remove(pid)
+                queue_name = children[pid]
+                _log.error("Child %d (%s) exited: %s" % (
+                    pid, children[pid], _status_string(status) ))
+                del children[pid]
+
+                pid = self.fork_child(queue_name)
+                children[pid] = queue_name
+                _log.info("Respawned %s for %s" % (pid, queue_name))
+
+    def fork_child(self, queue_name):
+        pid = os.fork()
+        if pid:                         # parent
+            return pid
+        # child
+        _log = logging.getLogger('django_sqs.runreceiver.%s' % queue_name)
+        _log.addHandler(_NullHandler())
+        _log.info("Start receiving.")
+        self.receive(queue_name)
+        _log.error("CAN'T HAPPEN: exiting.")
+        raise SystemExit(0)
 
     def receive(self, queue_name):
         rq = django_sqs.queues[queue_name]
