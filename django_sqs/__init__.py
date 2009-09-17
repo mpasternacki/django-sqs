@@ -3,7 +3,7 @@ import boto.sqs.connection
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
-from registered_queue import RegisteredQueue
+from registered_queue import RegisteredQueue, TimedOut, RestartLater
 
 
 # ensure settings are there

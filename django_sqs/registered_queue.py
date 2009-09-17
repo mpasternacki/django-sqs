@@ -30,6 +30,11 @@ def sigalrm_handler(signum, frame):
     raise TimedOut()
 
 
+class RestartLater(Exception):
+    """Raised by receivers to stop processing and leave message in queue."""
+    pass
+
+
 class RegisteredQueue(object):
 
     class ReceiverProxy(object):
@@ -150,7 +155,10 @@ class RegisteredQueue(object):
                         self.receive(m)
                     except KeyboardInterrupt, e:
                         raise e
+                    except RestartLater:
+                        self._log.debug("Restarting message handling")
                     except:
                         self._log.exception("Caught exception in receive loop.")
+                        q.delete_message(m)
                     else:
                         q.delete_message(m)

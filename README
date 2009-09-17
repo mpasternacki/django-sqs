@@ -99,9 +99,12 @@ Table of Contents
 
   For each message received on the queue, registered receiver function
   is called with the message instance as argument.  If receiver
-  function returns successfully (i.e. without raising an exception),
-  message is then deleted from queue.  If receiver message raises an
-  exception, message is left in queue for further processing.
+  function returns successfully, message is then deleted from queue.
+  If receiver message raises an exception, exception traceback is
+  logged using logging module, and message is deleted.  If receiver
+  sees a restartable error and wants to keep message in queue, it
+  should raise django_sqs.RestartLater exception - this exception will
+  leave the message in queue.
 
 4 Sending 
 ~~~~~~~~~~
