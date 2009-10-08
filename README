@@ -23,12 +23,13 @@ Table of Contents
 6 Management 
     6.1 manage.py sqs_status 
     6.2 manage.py sqs_clear 
-7 FIXME 
-    7.1 Sensible forking/threading or multiplexing instead of the fork hack? 
-    7.2 Autoimporting receivers.py from apps 
-    7.3 docstrings 
-    7.4 Minimize polling 
-    7.5 Custom exception to leave message in queue 
+7 Views 
+8 FIXME 
+    8.1 Sensible forking/threading or multiplexing instead of the fork hack? 
+    8.2 Autoimporting receivers.py from apps 
+    8.3 docstrings 
+    8.4 Minimize polling 
+    8.5 Custom exception to leave message in queue 
 
 
 1 Setup 
@@ -165,25 +166,30 @@ Table of Contents
    messages may be still locked and won't be deleted.  Command may
    need to be re-run.
 
-7 FIXME 
+7 Views 
+~~~~~~~~
+  A single view, `django_sqs.views.status', is provided for simple,
+  plain text queue status report (same as `manage.py sqs_status').
+
+8 FIXME 
 ~~~~~~~~
 
-7.1 TODO Sensible forking/threading or multiplexing instead of the fork hack? 
+8.1 TODO Sensible forking/threading or multiplexing instead of the fork hack? 
 ==============================================================================
 
-7.2 TODO Autoimporting receivers.py from apps 
+8.2 TODO Autoimporting receivers.py from apps 
 ==============================================
 
-7.3 TODO docstrings 
+8.3 TODO docstrings 
 ====================
 
-7.4 TODO Minimize polling 
+8.4 TODO Minimize polling 
 ==========================
    Amazon charges for every call.  Less polling, lower invoice.  Some
    exponential backoff + out-of-band signal (view?) to wake up a running
    receiver process may be a good thing.
 
-7.5 TODO Custom exception to leave message in queue 
+8.5 TODO Custom exception to leave message in queue 
 ====================================================
    Provide a custom exception class that won't be handled by receive
    loop (i.e. no backtrace) that can be used by receiver function to
