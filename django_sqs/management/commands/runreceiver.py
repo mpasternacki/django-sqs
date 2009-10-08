@@ -79,6 +79,12 @@ class Command(BaseCommand):
             _log = logging.getLogger('django_sqs.runreceiver.master')
             _log.addHandler(_NullHandler())
 
+            # Close the DB connection now and let Django reopen it when it
+            # is needed again.  The goal is to make sure that every
+            # process gets its own connection
+            from django.db import connection
+            connection.close()
+
             os.setpgrp()
             children = {}               # queue name -> pid
             for queue_name in queue_names:
