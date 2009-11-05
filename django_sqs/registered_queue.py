@@ -158,7 +158,13 @@ class RegisteredQueue(object):
                     except RestartLater:
                         self._log.debug("Restarting message handling")
                     except:
-                        self._log.exception("Caught exception in receive loop.")
+                        try:
+                            body = repr(m.get_body())
+                        except Exception, e:
+                            body = "(cannot run %r.get_body(): %s)" % (m, e)
+                        self._log.exception(
+                            "Caught exception in receive loop for %s %s" % (
+                                m.__class__, body))
                         q.delete_message(m)
                     else:
                         q.delete_message(m)
