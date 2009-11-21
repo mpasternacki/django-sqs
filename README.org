@@ -129,6 +129,8 @@
    If queue receivers are running or were running recently, some
    messages may be still locked and won't be deleted.  Command may
    need to be re-run.
+** manage.py sqs_wait
+   Waits until specified (or all) queues are empty.
 * Views
   A single view, =django_sqs.views.status=, is provided for simple,
   plain text queue status report (same as =manage.py sqs_status=).

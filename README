@@ -23,6 +23,7 @@ Table of Contents
 6 Management 
     6.1 manage.py sqs_status 
     6.2 manage.py sqs_clear 
+    6.3 manage.py sqs_wait 
 7 Views 
 8 FIXME 
     8.1 Sensible forking/threading or multiplexing instead of the fork hack? 
@@ -165,6 +166,10 @@ Table of Contents
    If queue receivers are running or were running recently, some
    messages may be still locked and won't be deleted.  Command may
    need to be re-run.
+
+6.3 manage.py sqs_wait 
+=======================
+   Waits until specified (or all) queues are empty.
 
 7 Views 
 ~~~~~~~~
