@@ -6,6 +6,9 @@ from django.core.management.base import BaseCommand
 
 import django_sqs
 
+WAIT_TIME = getattr(settings, 'SQS_WAIT_TIME', 60)
+WAIT_CYCLES = getattr(settings, 'SQS_WAIT_CYCLES', 1)
+
 class Command(BaseCommand):
     help = "Wait until queues registered with django_sqs are empty" \
            " and all messages are processed."
@@ -14,16 +17,17 @@ class Command(BaseCommand):
     option_list = BaseCommand.option_list + (
         make_option('--wait-time', '-t',
                     type='int', dest="wait_time", metavar='SECONDS',
-                    default=getattr(settings, 'SQS_WAIT_TIME', 60),
+                    default=WAIT_TIME,
                     help = "Time to sleep between queue count checks."
-                    " Default is 60."),
+                    " Default is %d." % WAIT_TIME),
         make_option('--wait-cycles', '-c',
                     type='int', dest="wait_cycles", metavar='N',
-                    default=getattr(settings, 'SQS_WAIT_CYCLES', 1),
+                    default=WAIT_CYCLES,
                     help="Number of wait-time periods for which queues"
                     " must be empty to assume all messages have been"
-                    " processed and stop waiting.  Detault is 1, set"
-                    " to 0 to stop waiting immediately when queue is empty"),
+                    " processed and stop waiting.  Default is %d, set"
+                    " to 0 to stop waiting immediately when queue is empty"
+                    % WAIT_CYCLES),
         )
 
     def handle(self, *queue_names, **options):
