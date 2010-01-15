@@ -53,7 +53,7 @@ class RegisteredQueue(object):
 
     def __init__(self, name,
                  receiver=None, visibility_timeout=None, message_class=None,
-                 timeout=None):
+                 timeout=None, delete_on_start=False):
         self._connection = None
         self.name = name
         self.receiver = receiver
@@ -61,6 +61,7 @@ class RegisteredQueue(object):
         self.message_class = message_class or boto.sqs.message.Message
         self.queue = None
         self.timeout = timeout
+        self.delete_on_start = delete_on_start
 
         if self.timeout and not self.receiver:
             raise ValueError("timeout is meaningful only with receiver")
@@ -139,8 +140,11 @@ class RegisteredQueue(object):
         q = self.get_queue()
         mm = q.get_messages(1)
         if mm:
+            if self.delete_on_start:
+                q.delete_message(mm[0])
             rv1 = self.receive(mm[0])
-            q.delete_message(mm[0])
+            if not self.delete_on_start:
+                q.delete_message(mm[0])
             return (mm[0], rv1)
 
     def receive_loop(self):
@@ -152,6 +156,8 @@ class RegisteredQueue(object):
             else:
                 for m in mm:
                     try:
+                        if self.delete_on_start:
+                            q.delete_message(m)
                         self.receive(m)
                     except KeyboardInterrupt, e:
                         raise e
@@ -165,6 +171,8 @@ class RegisteredQueue(object):
                         self._log.exception(
                             "Caught exception in receive loop for %s %s" % (
                                 m.__class__, body))
-                        q.delete_message(m)
+                        if not self.delete_on_start:
+                            q.delete_message(m)
                     else:
-                        q.delete_message(m)
+                        if not self.delete_on_start:
+                            q.delete_message(m)

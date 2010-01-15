@@ -2,7 +2,7 @@
 #+TITLE:     django-sqs
 #+AUTHOR:    Maciej Pasternacki
 #+EMAIL:     maciej@pasternacki.net
-#+DATE:      2009-08-06 Thu
+#+DATE:      2010-01-15 Fri
 #+TEXT: Integrate Amazon Simple Queue Service in your Django project
 #+KEYWORDS: 
 #+LANGUAGE:  en
@@ -33,7 +33,7 @@
 ** Register using a decorator
    Decorate receiver function with:
 
-   : django_sqs.receiver([queue_name=None, visibility_timeout=None, message_class=None])
+   : django_sqs.receiver([queue_name=None, visibility_timeout=None, message_class=None, delete_on_start=False])
 
    Decorated function will become an instance of
    =django_sqs.registered_queue.RegisteredQueue.ReceiverProxy= class.
@@ -47,11 +47,17 @@
    If =queue_name= is omitted or false, function's =__module__= and
    =__name__= is used, with dots converted to double underscores.
 
+   If =delete_on_start= is true, received message will be deleted from
+   queue right after it's been received, before receiver function is
+   called.  If it is false (which is the default), it will be deleted
+   after receiver function has finished, when message has been fully
+   processed.
+
 ** Register manually
    Alternatively, you can avoid decoration, and register a receiver
    manually by calling:
 
-   : django_sqs.register(queue_name, [fn=None, visibility_timeout=None, message_class=None])
+   : django_sqs.register(queue_name, [fn=None, visibility_timeout=None, message_class=None, delete_on_start=False])
 
    If =fn= is None or not given, no handler is assigned: messages can
    be sent, but won't be received.
