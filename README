@@ -40,8 +40,10 @@ Table of Contents
   1. Add `django_sqs' to your Python path
   2. Add `django_sqs' to INSTALLED_APPS setting
   3. Set AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
-  4. If DEBUG, set SQS_QUEUE_PREFIX to prefix your queues and avoid
-     clashes with other developers, production/staging env and so on
+  4. Optionally set SQS_QUEUE_PREFIX to prefix your queues and avoid
+     clashes with other developers, production/staging env and so on.
+     SQS_QUEUE_PREFIX is required when DEBUG is true, and recommended
+     even in production mode.
   5. Optionally set SQS_DEFAULT_VISIBILITY_TIMEOUT (default is 60 seconds)
   6. Optionally set SQS_POLL_PERIOD (default is 10 seconds)
 
