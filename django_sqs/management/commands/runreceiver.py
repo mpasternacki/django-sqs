@@ -54,6 +54,9 @@ class Command(BaseCommand):
         make_option('--pid-file',
                     dest='pid_file', default='',
                     help="Store process ID in a file"),
+        make_option('--message-limit',
+                    dest='message_limit', default=None, type='int',
+                    metavar='N', help='Exit after processing N messages'),
         )
 
     def handle(self, *queue_names, **options):
@@ -72,7 +75,8 @@ class Command(BaseCommand):
                 f.write('%d\n' % os.getpid())
 
         if len(queue_names) == 1:
-            self.receive(queue_names[0])
+            self.receive(queue_names[0],
+                         message_limit=options.get('message_limit', None))
         else:
             # fork a group of processes.  Quick hack, to be replaced
             # ASAP with something decent.
@@ -88,7 +92,8 @@ class Command(BaseCommand):
             os.setpgrp()
             children = {}               # queue name -> pid
             for queue_name in queue_names:
-                pid = self.fork_child(queue_name)
+                pid = self.fork_child(queue_name,
+                                      options.get('message_limit', None))
                 children[pid] = queue_name
                 _log.info("Forked %s for %s" % (pid, queue_name))
 
@@ -103,7 +108,7 @@ class Command(BaseCommand):
                 children[pid] = queue_name
                 _log.info("Respawned %s for %s" % (pid, queue_name))
 
-    def fork_child(self, queue_name):
+    def fork_child(self, queue_name, message_limit=None):
         pid = os.fork()
         if pid:                         # parent
             return pid
@@ -111,15 +116,20 @@ class Command(BaseCommand):
         _log = logging.getLogger('django_sqs.runreceiver.%s' % queue_name)
         _log.addHandler(_NullHandler())
         _log.info("Start receiving.")
-        self.receive(queue_name)
+        self.receive(queue_name, message_limit=message_limit)
         _log.error("CAN'T HAPPEN: exiting.")
         raise SystemExit(0)
 
-    def receive(self, queue_name):
+    def receive(self, queue_name, message_limit=None):
         rq = django_sqs.queues[queue_name]
         if rq.receiver:
-            print 'Receiving from queue %s...' % queue_name
-            rq.receive_loop()
+            if message_limit is None:
+                message_limit_info = ''
+            else:
+                message_limit_info = ' %d messages' % message_limit
+            print 'Receiving%s from queue %s...' % (
+                message_limit_info, queue_name)
+            rq.receive_loop(message_limit=message_limit)
         else:
             print 'Queue %s has no receiver, aborting.' % queue_name
 

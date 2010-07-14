@@ -147,9 +147,19 @@ class RegisteredQueue(object):
                 q.delete_message(mm[0])
             return (mm[0], rv1)
 
-    def receive_loop(self):
+    def receive_loop(self, message_limit=None):
+        """Run receiver loop.
+
+        If `message_limit' number is given, return after processing
+        this number of messages.
+        """
         q = self.get_queue()
+        i = 0
         while True:
+            if message_limit:
+                i += 1
+                if i > message_limit:
+                    return
             mm = q.get_messages(1)
             if not mm:
                 time.sleep(POLL_PERIOD)
