@@ -4,14 +4,14 @@
 #+EMAIL:     maciej@pasternacki.net
 #+DATE:      2010-01-15 Fri
 #+TEXT: Integrate Amazon Simple Queue Service in your Django project
-#+KEYWORDS: 
+#+KEYWORDS:
 #+LANGUAGE:  en
 #+OPTIONS:   H:3 num:t toc:t \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
 #+OPTIONS:   TeX:t LaTeX:t skip:nil d:nil todo:t pri:nil tags:not-in-toc
 #+INFOJS_OPT: view:nil toc:nil ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
 #+EXPORT_SELECT_TAGS: export
 #+EXPORT_EXCLUDE_TAGS: noexport
-#+LINK_UP:   
+#+LINK_UP:
 #+LINK_HOME: http://github.com/mpasternacki/django-sqs/
 
 * Setup
@@ -35,7 +35,7 @@
 ** Register using a decorator
    Decorate receiver function with:
 
-   : django_sqs.receiver([queue_name=None, visibility_timeout=None, message_class=None, delete_on_start=False])
+   : django_sqs.receiver([queue_name=None, visibility_timeout=None, message_class=None, delete_on_start=False, close_database=False])
 
    Decorated function will become an instance of
    =django_sqs.registered_queue.RegisteredQueue.ReceiverProxy= class.
@@ -54,6 +54,10 @@
    called.  If it is false (which is the default), it will be deleted
    after receiver function has finished, when message has been fully
    processed.
+
+   If =close_database= is true, all database connections will be
+   closed after processing each message to prevent pending unclosed
+   transactions.
 
 ** Register manually
    Alternatively, you can avoid decoration, and register a receiver

@@ -6,6 +6,13 @@ import boto.sqs.message
 
 from django.conf import settings
 
+try:
+    from django.db import connections
+    CONNECTIONS = connections.all()
+except ImportError:
+    from django.db import connection
+    CONNECTIONS = (connection, )
+
 class _NullHandler(logging.Handler):
     def emit(self, record):
         pass
@@ -53,7 +60,7 @@ class RegisteredQueue(object):
 
     def __init__(self, name,
                  receiver=None, visibility_timeout=None, message_class=None,
-                 timeout=None, delete_on_start=False):
+                 timeout=None, delete_on_start=False, close_database=False):
         self._connection = None
         self.name = name
         self.receiver = receiver
@@ -62,6 +69,7 @@ class RegisteredQueue(object):
         self.queue = None
         self.timeout = timeout
         self.delete_on_start = delete_on_start
+        self.close_database = close_database
 
         if self.timeout and not self.receiver:
             raise ValueError("timeout is meaningful only with receiver")
@@ -128,6 +136,10 @@ class RegisteredQueue(object):
                     # threat, since alarm already rang.
                     signal.alarm(0)
                     signal.signal(signal.SIGALRM, signal.SIG_DFL)
+            if self.close_database:
+                for connection in CONNECTIONS:
+                    print 'Closing', connection
+                    connection.close()
 
 
     def receive_single(self):

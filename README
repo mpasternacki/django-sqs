@@ -9,31 +9,31 @@ Integrate Amazon Simple Queue Service in your Django project
 
 Table of Contents
 =================
-1 Setup 
-2 Receivers 
-    2.1 Register using a decorator 
-    2.2 Register manually 
-    2.3 Example receiver 
-3 Receiving 
-4 Sending 
-    4.1 Using decorated function 
-    4.2 Manually 
-5 Custom message classes 
-    5.1 ModelInstanceMessage class 
-6 Management 
-    6.1 manage.py sqs_status 
-    6.2 manage.py sqs_clear 
-    6.3 manage.py sqs_wait 
-7 Views 
-8 FIXME 
-    8.1 Sensible forking/threading or multiplexing instead of the fork hack? 
-    8.2 Autoimporting receivers.py from apps 
-    8.3 docstrings 
-    8.4 Minimize polling 
-    8.5 Custom exception to leave message in queue 
+1 Setup
+2 Receivers
+    2.1 Register using a decorator
+    2.2 Register manually
+    2.3 Example receiver
+3 Receiving
+4 Sending
+    4.1 Using decorated function
+    4.2 Manually
+5 Custom message classes
+    5.1 ModelInstanceMessage class
+6 Management
+    6.1 manage.py sqs_status
+    6.2 manage.py sqs_clear
+    6.3 manage.py sqs_wait
+7 Views
+8 FIXME
+    8.1 Sensible forking/threading or multiplexing instead of the fork hack?
+    8.2 Autoimporting receivers.py from apps
+    8.3 docstrings
+    8.4 Minimize polling
+    8.5 Custom exception to leave message in queue
 
 
-1 Setup 
+1 Setup
 ~~~~~~~~
   Boto library for accessing Amazon Web Services is required.
 
@@ -47,17 +47,17 @@ Table of Contents
   5. Optionally set SQS_DEFAULT_VISIBILITY_TIMEOUT (default is 60 seconds)
   6. Optionally set SQS_POLL_PERIOD (default is 10 seconds)
 
-2 Receivers 
+2 Receivers
 ~~~~~~~~~~~~
   Create receiver function that accepts one argument, which will be an
   instance of `boto.sqs.message.Message' or its custom subclass.
   Then, register it as queue receiver:
 
-2.1 Register using a decorator 
+2.1 Register using a decorator
 ===============================
    Decorate receiver function with:
 
-   django_sqs.receiver([queue_name=None, visibility_timeout=None, message_class=None, delete_on_start=False])
+   django_sqs.receiver([queue_name=None, visibility_timeout=None, message_class=None, delete_on_start=False, close_database=False])
 
    Decorated function will become an instance of
    `django_sqs.registered_queue.RegisteredQueue.ReceiverProxy' class.
@@ -77,7 +77,11 @@ Table of Contents
    after receiver function has finished, when message has been fully
    processed.
 
-2.2 Register manually 
+   If `close_database' is true, all database connections will be
+   closed after processing each message to prevent pending unclosed
+   transactions.
+
+2.2 Register manually
 ======================
    Alternatively, you can avoid decoration, and register a receiver
    manually by calling:
@@ -91,13 +95,13 @@ Table of Contents
    (recommendation: use `receivers.py' and import them in `models.py',
    autoimporting TBD).
 
-2.3 Example receiver 
+2.3 Example receiver
 =====================
    @receiver("test")
    def receive_message(msg):
        print 'received:', msg.get_body()
 
-3 Receiving 
+3 Receiving
 ~~~~~~~~~~~~
   python manage.py runreceiver [queue_name [queue_name [...]]]
 
@@ -116,16 +120,16 @@ Table of Contents
   should raise django_sqs.RestartLater exception - this exception will
   leave the message in queue.
 
-4 Sending 
+4 Sending
 ~~~~~~~~~~
 
-4.1 Using decorated function 
+4.1 Using decorated function
 =============================
    You can simply call function decorated with `@receiver' decorator,
    providing a message instance or keyword arguments (like for `send'
    function described below).
 
-4.2 Manually 
+4.2 Manually
 =============
    To send a message manually, use following function:
 
@@ -141,14 +145,14 @@ Table of Contents
 
    django_sqs.send("a_queue", body='Lorem ipsum dolor sit amet')
 
-5 Custom message classes 
+5 Custom message classes
 ~~~~~~~~~~~~~~~~~~~~~~~~~
   For sending other values than raw, non-unicode strings, any of
   classes provided in `boto.sqs.message' or their subclasses may be
   used.  The module is well commented (much better than this one), so
   go ahead and read the fine source!
 
-5.1 ModelInstanceMessage class 
+5.1 ModelInstanceMessage class
 ===============================
    The `django_sqs.message.ModelInstanceMessage' class is provided for
    convenience.  It encodes a single model instance, using Django's
@@ -159,14 +163,14 @@ Table of Contents
    There is no support for passing additional information except the
    instance yet.
 
-6 Management 
+6 Management
 ~~~~~~~~~~~~~
 
-6.1 manage.py sqs_status 
+6.1 manage.py sqs_status
 =========================
    Prints the (approximate) count of messages in the queue.
 
-6.2 manage.py sqs_clear 
+6.2 manage.py sqs_clear
 ========================
    Clears all queues (by default), or queues named as arguments.
    Prints number of messages deleted.
@@ -175,34 +179,34 @@ Table of Contents
    messages may be still locked and won't be deleted.  Command may
    need to be re-run.
 
-6.3 manage.py sqs_wait 
+6.3 manage.py sqs_wait
 =======================
    Waits until specified (or all) queues are empty.
 
-7 Views 
+7 Views
 ~~~~~~~~
   A single view, `django_sqs.views.status', is provided for simple,
   plain text queue status report (same as `manage.py sqs_status').
 
-8 FIXME 
+8 FIXME
 ~~~~~~~~
 
-8.1 TODO Sensible forking/threading or multiplexing instead of the fork hack? 
+8.1 TODO Sensible forking/threading or multiplexing instead of the fork hack?
 ==============================================================================
 
-8.2 TODO Autoimporting receivers.py from apps 
+8.2 TODO Autoimporting receivers.py from apps
 ==============================================
 
-8.3 TODO docstrings 
+8.3 TODO docstrings
 ====================
 
-8.4 TODO Minimize polling 
+8.4 TODO Minimize polling
 ==========================
    Amazon charges for every call.  Less polling, lower invoice.  Some
    exponential backoff + out-of-band signal (view?) to wake up a running
    receiver process may be a good thing.
 
-8.5 TODO Custom exception to leave message in queue 
+8.5 TODO Custom exception to leave message in queue
 ====================================================
    Provide a custom exception class that won't be handled by receive
    loop (i.e. no backtrace) that can be used by receiver function to
