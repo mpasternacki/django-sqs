@@ -114,7 +114,7 @@ class RegisteredQueue(object):
             raise Exception("Not configured to received messages.")
         if self.timeout:
            signal.alarm(self.timeout)
-           signal.signal(signal.SIGALRM, sigalrm_handler) 
+           signal.signal(signal.SIGALRM, sigalrm_handler)
         try:
             self.receiver(message)
         finally:
@@ -128,7 +128,7 @@ class RegisteredQueue(object):
                     # threat, since alarm already rang.
                     signal.alarm(0)
                     signal.signal(signal.SIGALRM, signal.SIG_DFL)
-                    
+
 
     def receive_single(self):
         """Receive single message from the queue.
