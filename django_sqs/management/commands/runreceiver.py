@@ -51,6 +51,9 @@ class Command(BaseCommand):
         make_option('--daemon-stderr-log',
                     dest='stderr_log', default='/dev/null',
                     help="Log daemon's standard error stream to a file"),
+        make_option('--real-queue-name', dest='real_queue_name', default=None, 
+                    metavar='REAL_NAME',
+                    help="Take messages from queue REAL_NAME instead of queue_name."),
         make_option('--pid-file',
                     dest='pid_file', default='',
                     help="Store process ID in a file"),
@@ -76,6 +79,7 @@ class Command(BaseCommand):
 
         if len(queue_names) == 1:
             self.receive(queue_names[0],
+                         real_queue_name=options.get('real_queue_name'),
                          message_limit=options.get('message_limit', None))
         else:
             # fork a group of processes.  Quick hack, to be replaced
@@ -120,15 +124,22 @@ class Command(BaseCommand):
         _log.error("CAN'T HAPPEN: exiting.")
         raise SystemExit(0)
 
-    def receive(self, queue_name, message_limit=None):
+    def receive(self, queue_name, message_limit=None, real_queue_name=None):
         rq = django_sqs.queues[queue_name]
+        if real_queue_name is not None:
+            rq.name = real_queue_name
         if rq.receiver:
             if message_limit is None:
                 message_limit_info = ''
             else:
                 message_limit_info = ' %d messages' % message_limit
-            print 'Receiving%s from queue %s...' % (
-                message_limit_info, queue_name)
+
+            if real_queue_name is None:
+                print 'Receiving%s from queue %s...' % (
+                    message_limit_info, queue_name)
+            else:
+                print 'Receiving%s from queue %s (pretending it\'s %s)...' % (
+                    message_limit_info, real_queue_name, queue_name)
             rq.receive_loop(message_limit=message_limit)
         else:
             print 'Queue %s has no receiver, aborting.' % queue_name

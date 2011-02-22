@@ -79,15 +79,18 @@ class RegisteredQueue(object):
                 "%s is not a subclass of boto.sqs.message.RawMessage"
                 % self.message_class)
 
-        prefix = getattr(settings, 'SQS_QUEUE_PREFIX', None)
-        if prefix:
-            self.full_name = '%s__%s' % (prefix, self.name)
-        else:
-            self.full_name = self.name
+        self.prefix = getattr(settings, 'SQS_QUEUE_PREFIX', None)
 
         self._log = logging.getLogger('django_sqs.queue.%s' % self.name)
         self._log.addHandler(_NullHandler())
-        self._log.info("Using queue %s" % self.full_name)
+        self._log.info("Using queue %s" % self.full_name())
+
+    def full_name(self, name=None):
+        name = name or self.name
+        if self.prefix:
+            return '%s__%s' % (self.prefix, name)
+        else:
+            return name
 
     def get_connection(self):
         if self._connection is None:
@@ -97,18 +100,18 @@ class RegisteredQueue(object):
                 debug=boto_debug)
         return self._connection
 
-    def get_queue(self):
+    def get_queue(self, real_queue_name=None):
         if self.queue is None:
             self.queue = self.get_connection().create_queue(
-                self.full_name, self.visibility_timeout)
+                self.full_name(name=real_queue_name), self.visibility_timeout)
             self.queue.set_message_class(self.message_class)
         return self.queue
 
     def get_receiver_proxy(self):
         return self.ReceiverProxy(self)
 
-    def send(self, message=None, **kwargs):
-        q = self.get_queue()
+    def send(self, message=None, real_queue_name=None, **kwargs):
+        q = self.get_queue(real_queue_name=real_queue_name)
         if message is None:
             message = self.message_class(**kwargs)
         else:
