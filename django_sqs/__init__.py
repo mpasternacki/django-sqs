@@ -36,5 +36,5 @@ def receiver(queue_name=None, **kwargs):
     return _decorator
 
 
-def send(queue_name, message=None, real_queue_name=None, **kwargs):
-    queues[queue_name].send(message, real_queue_name=real_queue_name, **kwargs)
+def send(queue_name, message=None, suffix=None, **kwargs):
+    queues[queue_name].send(message, suffix, **kwargs)

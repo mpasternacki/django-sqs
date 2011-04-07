@@ -1,6 +1,7 @@
 import logging
 import signal
 import time
+from warnings import warn
 
 import boto.sqs.message
 
@@ -42,6 +43,11 @@ class RestartLater(Exception):
     pass
 
 
+class UnknownSuffixWarning(RuntimeWarning):
+    """Unknown suffix passed to a registered queue"""
+    pass
+
+
 class RegisteredQueue(object):
 
     class ReceiverProxy(object):
@@ -60,16 +66,18 @@ class RegisteredQueue(object):
 
     def __init__(self, name,
                  receiver=None, visibility_timeout=None, message_class=None,
-                 timeout=None, delete_on_start=False, close_database=False):
+                 timeout=None, delete_on_start=False, close_database=False,
+                 suffixes=()):
         self._connection = None
         self.name = name
         self.receiver = receiver
         self.visibility_timeout = visibility_timeout or DEFAULT_VISIBILITY_TIMEOUT
         self.message_class = message_class or boto.sqs.message.Message
-        self.queue = None
+        self.queues = {}
         self.timeout = timeout
         self.delete_on_start = delete_on_start
         self.close_database = close_database
+        self.suffixes = suffixes
 
         if self.timeout and not self.receiver:
             raise ValueError("timeout is meaningful only with receiver")
@@ -85,8 +93,12 @@ class RegisteredQueue(object):
         self._log.addHandler(_NullHandler())
         self._log.info("Using queue %s" % self.full_name())
 
-    def full_name(self, name=None):
-        name = name or self.name
+    def full_name(self, suffix=None):
+        name = self.name
+        if suffix:
+            if suffix not in self.suffixes:
+                warn("Unknown suffix %s" % suffix, UnknownSuffixWarning)
+            name = '%s__%s' % ( name, suffix )
         if self.prefix:
             return '%s__%s' % (self.prefix, name)
         else:
@@ -100,18 +112,18 @@ class RegisteredQueue(object):
                 debug=boto_debug)
         return self._connection
 
-    def get_queue(self, real_queue_name=None):
-        if self.queue is None:
-            self.queue = self.get_connection().create_queue(
-                self.full_name(name=real_queue_name), self.visibility_timeout)
-            self.queue.set_message_class(self.message_class)
-        return self.queue
+    def get_queue(self, suffix=None):
+        if suffix not in self.queues:
+            self.queues[suffix] = self.get_connection().create_queue(
+                self.full_name(suffix), self.visibility_timeout)
+            self.queues[suffix].set_message_class(self.message_class)
+        return self.queues[suffix]
 
     def get_receiver_proxy(self):
         return self.ReceiverProxy(self)
 
-    def send(self, message=None, real_queue_name=None, **kwargs):
-        q = self.get_queue(real_queue_name=real_queue_name)
+    def send(self, message=None, suffix=None, **kwargs):
+        q = self.get_queue(suffix)
         if message is None:
             message = self.message_class(**kwargs)
         else:
@@ -145,14 +157,14 @@ class RegisteredQueue(object):
                     connection.close()
 
 
-    def receive_single(self):
+    def receive_single(self, suffix=None):
         """Receive single message from the queue.
 
         This method is here for debugging purposes.  It receives
         single message from the queue, processes it, deletes it from
         queue and returns (message, handler_result_value) pair.
         """
-        q = self.get_queue()
+        q = self.get_queue(suffix)
         mm = q.get_messages(1)
         if mm:
             if self.delete_on_start:
@@ -162,13 +174,13 @@ class RegisteredQueue(object):
                 q.delete_message(mm[0])
             return (mm[0], rv1)
 
-    def receive_loop(self, message_limit=None):
+    def receive_loop(self, message_limit=None, suffix=None):
         """Run receiver loop.
 
         If `message_limit' number is given, return after processing
         this number of messages.
         """
-        q = self.get_queue()
+        q = self.get_queue(suffix)
         i = 0
         while True:
             if message_limit:

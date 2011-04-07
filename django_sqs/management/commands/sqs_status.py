@@ -14,4 +14,7 @@ class Command(NoArgsCommand):
         for label, queue in django_sqs.queues.items():
             q = queue.get_queue()
             print "%-30s: %4s" % (label, q.count())
-
+            if queue.suffixes:
+                for suffix in queue.suffixes:
+                    q = queue.get_queue(suffix)
+                    print " .%-28s: %4s" % (suffix, q.count())

@@ -35,7 +35,7 @@
 ** Register using a decorator
    Decorate receiver function with:
 
-   : django_sqs.receiver([queue_name=None, visibility_timeout=None, message_class=None, delete_on_start=False, close_database=False])
+   : django_sqs.receiver([queue_name=None, visibility_timeout=None, message_class=None, delete_on_start=False, close_database=False, suffixes=()])
 
    Decorated function will become an instance of
    =django_sqs.registered_queue.RegisteredQueue.ReceiverProxy= class.
@@ -49,6 +49,9 @@
    If =queue_name= is omitted or false, function's =__module__= and
    =__name__= is used, with dots converted to double underscores.
 
+   The =suffixes= argument is a tuple of known queue name suffixes. If
+   an unknown suffix is used, a warning will be issued.
+
    If =delete_on_start= is true, received message will be deleted from
    queue right after it's been received, before receiver function is
    called.  If it is false (which is the default), it will be deleted
@@ -59,11 +62,15 @@
    closed after processing each message to prevent pending unclosed
    transactions.
 
+   Queue name suffixes can be used to split processing similar items
+   to multiple queues (e.g. use separate queue for big input items to
+   distribute load).
+
 ** Register manually
    Alternatively, you can avoid decoration, and register a receiver
    manually by calling:
 
-   : django_sqs.register(queue_name, [fn=None, visibility_timeout=None, message_class=None, delete_on_start=False])
+   : django_sqs.register(queue_name, [fn=None, visibility_timeout=None, message_class=None, delete_on_start=False, suffixes=()])
 
    If =fn= is None or not given, no handler is assigned: messages can
    be sent, but won't be received.
@@ -78,7 +85,7 @@
    :     print 'received:', msg.get_body()
 
 * Receiving
-  : python manage.py runreceiver [queue_name [queue_name [...]]]
+  : python manage.py runreceiver [--message-limit=N] [--suffix=SUFFIX] [queue_name [queue_name [...]]]
 
   If no =queue_name= parameters are given, receive from all configured
   queues.
@@ -92,8 +99,13 @@
   If receiver message raises an exception, exception traceback is
   logged using logging module, and message is deleted.  If receiver
   sees a restartable error and wants to keep message in queue, it
-  should raise django_sqs.RestartLater exception - this exception will
+  should raise =django_sqs.RestartLater= exception - this exception will
   leave the message in queue.
+
+  Options:
+
+  * =--message-limit=N= :: exit after receiving =N= messages
+  * =--suffix=SUFFIX= :: Use queue name suffix
 
 * Sending
 ** Using decorated function
@@ -103,7 +115,7 @@
 ** Manually
    To send a message manually, use following function:
 
-   : django_sqs.send(queue_name, message=None, **kwargs)
+   : django_sqs.send(queue_name, message=None, suffix=None, **kwargs)
 
    =message= should be an instance of =message_class= configured with
    =receiver= decorator or =register= function for the queue (or
@@ -115,11 +127,14 @@
 
    : django_sqs.send("a_queue", body='Lorem ipsum dolor sit amet')
 
+   =suffix= is a queue name suffix to use.
+
 * Custom message classes
   For sending other values than raw, non-unicode strings, any of
   classes provided in =boto.sqs.message= or their subclasses may be
   used.  The module is well commented (much better than this one), so
   go ahead and read the fine source!
+
 
 ** ModelInstanceMessage class
    The =django_sqs.message.ModelInstanceMessage= class is provided for
