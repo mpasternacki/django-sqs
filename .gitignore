@@ -18,3 +18,5 @@ local_settings.py
 .settings/*
 log.txt
 .notes
+dist/
+django_sqs.egg-info/

@@ -15,6 +15,13 @@ try:
 except Exception, e:
     raise ImproperlyConfigured("Misconfigured: %s" % e)
 
+# Try to get regions, otherwise let to DefaultRegionName
+try:
+    from settings import AWS_REGION
+except Exception, e:
+    settings.AWS_REGION = "us-east-1"
+
+
 # registry
 
 queues = {}

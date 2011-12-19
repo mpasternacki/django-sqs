@@ -109,6 +109,7 @@ class RegisteredQueue(object):
             self._connection = boto.sqs.connection.SQSConnection(
                 settings.AWS_ACCESS_KEY_ID,
                 settings.AWS_SECRET_ACCESS_KEY,
+                region=settings.AWS_REGION,
                 debug=boto_debug)
         return self._connection
 

@@ -46,6 +46,7 @@ Table of Contents
      even in production mode.
   5. Optionally set SQS_DEFAULT_VISIBILITY_TIMEOUT (default is 60 seconds)
   6. Optionally set SQS_POLL_PERIOD (default is 10 seconds)
+  7. Optionally set AWS_REGION (default to "us-east-1")
 
 2 Receivers 
 ~~~~~~~~~~~~
