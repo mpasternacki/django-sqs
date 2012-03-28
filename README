@@ -3,6 +3,7 @@
 
 Author: Maciej Pasternacki <maciej@pasternacki.net>
 Date: 2010-01-15 Fri
+Maintainer: Adrien Lemaire <lemaire.adrien@gmail.com>
 
 
 Integrate Amazon Simple Queue Service in your Django project

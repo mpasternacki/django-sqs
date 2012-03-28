@@ -3,6 +3,7 @@
 #+AUTHOR:    Maciej Pasternacki
 #+EMAIL:     maciej@pasternacki.net
 #+DATE:      2010-01-15 Fri
+#+MAINTAINER:Adrien Lemaire
 #+TEXT: Integrate Amazon Simple Queue Service in your Django project
 #+KEYWORDS:
 #+LANGUAGE:  en
@@ -12,7 +13,13 @@
 #+EXPORT_SELECT_TAGS: export
 #+EXPORT_EXCLUDE_TAGS: noexport
 #+LINK_UP:
-#+LINK_HOME: http://github.com/mpasternacki/django-sqs/
+#+LINK_HOME: http://github.com/fandekasp/django-sqs/
+
+
+* Note on Upgrades
+  Being overwhelmed by work, I won't upgrade this package if nobody asks for it.
+  If you're capable, please fork and pull request to help me, thanks in advance !
+
 
 * Setup
   Boto library for accessing Amazon Web Services is required.
