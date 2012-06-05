@@ -6,6 +6,7 @@ from warnings import warn
 import boto.sqs.message
 
 from django.conf import settings
+from utilities.exceptional import send_to_exceptional
 
 try:
     from django.db import connections
@@ -200,14 +201,18 @@ class RegisteredQueue(object):
                         raise e
                     except RestartLater:
                         self._log.debug("Restarting message handling")
-                    except:
+                    except Exception, exc:
                         try:
                             body = repr(m.get_body())
-                        except Exception, e:
-                            body = "(cannot run %r.get_body(): %s)" % (m, e)
-                        self._log.exception(
-                            "Caught exception in receive loop for %s %s" % (
-                                m.__class__, body))
+                        except Exception, ee:
+                            body = "(cannot run %r.get_body(): %s)" % (m, ee)
+                        send_to_exceptional(
+                            exc,
+                            controller='django_sqs.RegisteredQueue.receive_loop',
+                            action=self.full_name(suffix=suffix),
+                            parameters={
+                                'body': body
+                                },)
                         if not self.delete_on_start:
                             q.delete_message(m)
                     else:
