@@ -7,27 +7,31 @@ from registered_queue import RegisteredQueue, TimedOut, RestartLater
 
 
 # ensure settings are there
+if not getattr(settings, 'AWS_ACCESS_KEY_ID'):
+    raise ImproperlyConfigured('Missing setting "AWS_ACCESS_KEY_ID"')
 
-try:
-    from settings import AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
-    if settings.DEBUG:
-        from settings import SQS_QUEUE_PREFIX
-except Exception, e:
-    raise ImproperlyConfigured("Misconfigured: %s" % e)
+if not getattr(settings, 'AWS_SECRET_ACCESS_KEY'):
+    raise ImproperlyConfigured('Missing setting "AWS_SECRET_ACCESS_KEY"')
+
+if settings.DEBUG and not getattr(settings, 'SQS_QUEUE_PREFIX'):
+    raise ImproperlyConfigured('Missing setting "SQS_QUEUE_PREFIX"')
 
 # Try to get regions, otherwise let to DefaultRegionName
-try:
-    from settings import AWS_REGION
-except Exception, e:
+# TODO this is bad! never set settings on the fly, better provide an
+# app_settings.py with default values
+if not getattr(settings, 'AWS_REGION'):
     settings.AWS_REGION = "us-east-1"
 
 
+# ============
 # registry
-
+# ============
 queues = {}
 
-# convenience
 
+# ============
+# convenience
+# ============
 def register(queue_name, fn=None, **kwargs):
     rv = RegisteredQueue(queue_name, fn, **kwargs)
     queues[queue_name] = rv
